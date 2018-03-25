@@ -22,22 +22,16 @@ var provider;
 	]);
 
 	const wallet = new Wallet('0x' + privateKey);
-
 	wallet.provider = provider;
 
-	var utf8bytesMessage = utils.toUtf8Bytes(message);
-
-	const hashMsg = utils.sha256(utf8bytesMessage);
-
-	const sig = wallet.signMessage(hashMsg);
-	console.log(sig);
+	const hashMsg = utils.solidityKeccak256(['string'], [message]);
+	var hashData = ethers.utils.arrayify(hashMsg);
+	const signature = wallet.signMessage(hashData);
 
 	const testContract = new ethers.Contract(contractAddress, contractABI, wallet);
+	const result = await testContract.recover(hashMsg, signature);
 
-	const result = await testContract.recover(hashMsg, sig);
-
-	console.log('local verify: ', Wallet.verifyMessage(utils.toUtf8Bytes(hashMsg), sig));
-
+	console.log('local verify: ', Wallet.verifyMessage(hashData, signature));
 	console.log('remote verify: ', result);
 
 })()
